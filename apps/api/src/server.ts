@@ -11,6 +11,8 @@ import nodemailer from 'nodemailer'
 
 dotenv.config()
 
+const PORT = process.env.PORT ? Number(process.env.PORT) : 8080
+
 const transport = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
@@ -517,7 +519,7 @@ app.post('/upload', async (request, reply) => {
 
 app.listen({
     host: '0.0.0.0',
-    port: process.env.PORT ? Number(process.env.PORT) : 8080
+    port: PORT
 }).then(() => {
-    console.log('http server running')
+    console.log(`http server running on port http://localhost:${PORT}`)
 })
