@@ -19,7 +19,7 @@ export const config: MiddlewareConfig = {
         * - _next/image (image optimization files)
         * - favicon.ico, sitemap.xml, robots.txt (metadata files)
         */
-        '/((?!api|_next/static|_next/image|favicon2.png|sitemap.xml|robots.txt).*)',
+        '/((?!api|_next/static|_next/image|favicon2.png|sitemap.xml|robots.txt|maintenance).*)',
     ],
 }
 
@@ -28,7 +28,13 @@ export async function middleware(request: NextRequest){
     const publicRoute = publicRoutes.find(route => route.path === path)
     const authToken = request.cookies.get('account_token')
 
-    const isMaintenanceMode = await get('maintenance')
+    let isMaintenanceMode: boolean | undefined = false
+    try {
+        isMaintenanceMode = await get('maintenance')
+    } catch(error) {
+        console.log(error);
+        isMaintenanceMode = false
+    }
     
 
     if(isMaintenanceMode){
