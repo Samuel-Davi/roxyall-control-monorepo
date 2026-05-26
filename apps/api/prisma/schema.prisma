@@ -13,10 +13,11 @@ model User {
   name              String              @db.VarChar(100)
   email             String              @unique @db.VarChar(100)
   password          String              @db.VarChar(255)
+  role              Role                @default(USER)
+  isActive          Boolean             @default(true)
   avatarUrl         String?             @db.VarChar(255)
   deleteUrl         String?             @db.VarChar(255)
   createdAt         DateTime            @default(now())
-
   accounts          Account[]
   cards             Card[]
   transactions      Transaction[]
@@ -24,6 +25,11 @@ model User {
   reserves          Reserve[]
   scheduledTransfers ScheduledTransfer[]
   purchases         Purchase[]
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 // ─── Conta bancária ────────────────────────────────────
