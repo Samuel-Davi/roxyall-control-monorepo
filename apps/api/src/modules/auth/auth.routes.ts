@@ -4,12 +4,44 @@ import {
   signupController,
   resetPasswordController,
   sendEmailController,
+  meController,
 } from './auth.controller'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
-import { loginSchema, signupSchema, resetPasswordSchema, sendEmailSchema, loginResponseSchema, errorSchema, signupResponseSchema, resetPasswordResponseSchema, sendEmailResponseSchema } from './auth.schema'
+import { 
+  loginSchema,
+  signupSchema, 
+  resetPasswordSchema,
+  sendEmailSchema, 
+  loginResponseSchema, 
+  errorSchema,
+  signupResponseSchema, 
+  resetPasswordResponseSchema, 
+  sendEmailResponseSchema, 
+  meResponseSchema } from './auth.schema'
+import { authenticate } from '../../middlewares/authenticate'
 
 export const authRoutes = async (app: FastifyInstance) => {
   const api = app.withTypeProvider<ZodTypeProvider>()
+
+  // Me
+  api.get(
+    '/me',
+    {
+      preHandler: authenticate,
+      schema: {
+        tags: ['Auth'],
+        summary: 'Obter dados do usuário',
+        description: 'Retorna os dados do usuário autenticado',
+        security: [{ bearerAuth: [] }],
+        response: {
+          200: meResponseSchema,
+          404: errorSchema,
+          500: errorSchema,
+        },
+      },
+    },
+    meController
+  )
 
   // Login
   api.post(

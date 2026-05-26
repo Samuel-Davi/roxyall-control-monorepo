@@ -1,7 +1,22 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
-import { loginService, signupService, resetPasswordService, sendEmailService } from './auth.service'
+import { loginService, signupService, resetPasswordService, sendEmailService, meService } from './auth.service'
 import { handleError, AppError } from '../../utils/error-handler'
 import { LoginInput, SignupInput, ResetPasswordInput, SendEmailInput } from './auth.schema'
+
+export async function meController(
+  request: FastifyRequest,
+  reply: FastifyReply,
+){
+  try{
+    const user = request.user
+    if (!user || !user.id) throw new AppError('Usuário não autenticado', 401)
+    
+    const result = await meService(user.id)
+    return reply.status(200).send({ user: result })
+  } catch (error) {
+    return handleError(error, reply)
+  }
+}
 
 export async function loginController(
   request: FastifyRequest<{ Body: LoginInput }>,
@@ -51,6 +66,7 @@ export async function sendEmailController(
     await sendEmailService(email, realCode)
     return reply.status(200).send({ success: true })
   } catch (error) {
+    console.log(error)
     return handleError(error, reply)
   }
 }

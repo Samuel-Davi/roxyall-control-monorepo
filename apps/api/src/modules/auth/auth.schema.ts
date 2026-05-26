@@ -1,5 +1,17 @@
 import { z } from 'zod'
 
+export const meResponseSchema = z.object({
+  user: z.object({
+    id: z.number(),
+    name: z.string(),
+    email: z.string().email(),
+    role: z.enum(['USER', 'ADMIN']),
+    avatarUrl: z.string().nullable(),
+    deleteUrl: z.string().nullable(),
+    createdAt: z.date(),
+  })
+})
+
 export const loginSchema = z.object({
   email: z.string().email({ message: 'Email inválido' }),
   password: z.string().min(1, { message: 'Senha obrigatória' }),
@@ -11,6 +23,7 @@ export const loginResponseSchema = z.object({
     id: z.number(),
     name: z.string(),
     email: z.string().email(),
+    role: z.enum(['USER', 'ADMIN']),
     avatarUrl: z.string().nullable(),
     deleteUrl: z.string().nullable(),
     createdAt: z.date(),
@@ -51,6 +64,7 @@ export const errorSchema = z.object({
   error: z.string(),
 })
 
+export type MeResponse = z.infer<typeof meResponseSchema>
 export type LoginInput = z.infer<typeof loginSchema>
 export type LoginResponse = z.infer<typeof loginResponseSchema>
 export type SignupInput = z.infer<typeof signupSchema>

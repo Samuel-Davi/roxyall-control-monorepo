@@ -21,8 +21,27 @@ const createTransport = () => {
   })
 }
 
+export async function meService(userId: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      avatarUrl: true,
+      deleteUrl: true,
+      createdAt: true,
+    },
+  })
+
+  if (!user) throw new AppError('Usuário não encontrado', 404)
+
+  return user
+}
+
 export async function loginService(email: string, password: string, timeToken: string) {
-  const user = await prisma.user.findUnique({ where: { email } })
+  const user = await prisma.user.findUnique({ where: { email }})
 
   if (!user) throw new AppError('Usuário não encontrado', 404)
 
@@ -30,7 +49,7 @@ export async function loginService(email: string, password: string, timeToken: s
   if (!isValid) throw new AppError('Email ou senha inválidos', 401)
 
   const expiresIn = timeToken === '1h' ? '1h' : '30d'
-  const token = jwt.sign({ id: user.id, email: user.email }, env.JWT_SECRET, { expiresIn })
+  const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, env.JWT_SECRET, { expiresIn })
 
   const { password: _password, ...userWithoutPassword } = user
   return { ...userWithoutPassword, token, timeToken }

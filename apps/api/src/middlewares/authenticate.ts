@@ -5,21 +5,22 @@ import { env } from '../config/env';
 interface DecodedToken {
     id: number;
     email: string;
+    role: "ADMIN" | "USER";
 }
 
-export const authenticate = async (req: FastifyRequest, res: FastifyReply) => {
+export const authenticate = async (req: FastifyRequest, reply: FastifyReply) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader?.startsWith('Bearer ')) {
-        return res.status(401).send({ message: 'Unauthorized' });
+        return reply.code(401).send({ message: 'Unauthorized' });
     }
 
     const token = authHeader.split(' ')[1];
 
     try {
         const decoded = jwt.verify(token, env.JWT_SECRET) as DecodedToken;
-        req.user = decoded;
+        req.user = { id: decoded.id, email: decoded.email, role: decoded.role };
     } catch {
-        return res.status(401).send({ message: 'Token Inválido' });
+        return reply.code(401).send({ message: 'Token Inválido' });
     }
 }

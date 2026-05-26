@@ -21,6 +21,15 @@ export function buildApp() {
         title: 'Roxyall Control API',
         version: '1.0.0',
       },
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT'
+          }
+        }
+      }
     },
     transform: jsonSchemaTransform
   })
