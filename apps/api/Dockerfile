@@ -21,4 +21,7 @@ RUN npx prisma generate
 
 EXPOSE 8080
 
-CMD ["pnpm", "dev"]
+COPY apps/api/entrypoint.sh ./entrypoint.sh
+RUN chmod +x entrypoint.sh
+
+CMD ["sh", "entrypoint.sh"]
