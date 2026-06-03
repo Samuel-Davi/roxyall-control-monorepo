@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: roxyall-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: roxyall
+      POSTGRES_PASSWORD: roxyall
+      POSTGRES_DB: roxyall
+    ports:
+      - "5433:5432"
+    volumes:
+      - roxyall-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roxyall"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: roxyall-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./apps/api/.env
+    environment:
+      DATABASE_URL: "postgresql://roxyall:roxyall@db:5432/roxyall"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./packages/types/src:/app/packages/types/src
+
+volumes:
+  roxyall-db-data:
