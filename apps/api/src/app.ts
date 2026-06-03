@@ -5,6 +5,8 @@ import swaggerUi from '@fastify/swagger-ui'
 import { validatorCompiler, serializerCompiler, jsonSchemaTransform } from 'fastify-type-provider-zod'
 import { corsPlugin } from './plugins/cors'
 import { authRoutes } from './modules/auth/auth.routes'
+import { usersRoutes } from './modules/users/users.routes'
+import { adminRoutes } from './modules/admin/admin.routes'
 
 export function buildApp() {
   const app = fastify()
@@ -43,6 +45,8 @@ export function buildApp() {
   })
 
   app.register(authRoutes, { prefix: '/auth' })
+  app.register(usersRoutes, { prefix: '/users' })
+  app.register(adminRoutes, { prefix: '/admin' })
 
   return app
 }

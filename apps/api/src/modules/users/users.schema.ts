@@ -1,12 +1,12 @@
-import z from "zod";
+import { z } from 'zod'
 
 export const updateUserSchema = z.object({
-    name: z.string().optional(),
-    email: z.string().email({ message: "Email Inválido" }).optional(),
+  name: z.string().min(2, { message: 'Nome deve ter no mínimo 2 caracteres' }).optional(),
+  email: z.string().email({ message: 'Email inválido' }).optional(),
 })
 
 export const userResponseSchema = z.object({
-    user: z.object({
+  user: z.object({
     id: z.number(),
     name: z.string(),
     email: z.string().email(),
@@ -16,12 +16,8 @@ export const userResponseSchema = z.object({
   }),
 })
 
-export const userDeleteResponseSchema = z.object({
-    message: z.string(),
-})
-
 export const errorSchema = z.object({
-    error: z.string(),
+  error: z.string(),
 })
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>
