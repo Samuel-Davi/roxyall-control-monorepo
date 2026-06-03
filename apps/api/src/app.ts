@@ -7,6 +7,7 @@ import { corsPlugin } from './plugins/cors'
 import { authRoutes } from './modules/auth/auth.routes'
 import { usersRoutes } from './modules/users/users.routes'
 import { adminRoutes } from './modules/admin/admin.routes'
+import { accountsRoutes } from './modules/accounts/accounts.routes'
 
 export function buildApp() {
   const app = fastify()
@@ -47,6 +48,7 @@ export function buildApp() {
   app.register(authRoutes, { prefix: '/auth' })
   app.register(usersRoutes, { prefix: '/users' })
   app.register(adminRoutes, { prefix: '/admin' })
+  app.register(accountsRoutes, { prefix: '/accounts' })
 
   return app
 }
