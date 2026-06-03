@@ -9,6 +9,7 @@ import { usersRoutes } from './modules/users/users.routes'
 import { adminRoutes } from './modules/admin/admin.routes'
 import { accountsRoutes } from './modules/accounts/accounts.routes'
 import { cardsRoutes } from './modules/cards/cards.routes'
+import { categoriesRoutes } from './modules/categories/categories.routes'
 
 export function buildApp() {
   const app = fastify()
@@ -51,6 +52,7 @@ export function buildApp() {
   app.register(adminRoutes, { prefix: '/admin' })
   app.register(accountsRoutes, { prefix: '/accounts' })
   app.register(cardsRoutes, { prefix: '/cards' })
+  app.register(categoriesRoutes, { prefix: '/categories' })
 
   return app
 }
