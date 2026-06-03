@@ -43,7 +43,9 @@ export async function meService(userId: number) {
 export async function loginService(email: string, password: string, timeToken: string) {
   const user = await prisma.user.findUnique({ where: { email }})
 
-  if (!user) throw new AppError('Usuário não encontrado', 404)
+  if (!user) throw new AppError('Email ou senha inválidos', 401);
+
+  if(!user.isActive) throw new AppError('Usuário inativo', 403);
 
   const isValid = await bcrypt.compare(password, user.password)
   if (!isValid) throw new AppError('Email ou senha inválidos', 401)
