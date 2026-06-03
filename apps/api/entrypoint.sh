@@ -9,10 +9,5 @@ pnpm seed
 
 echo "-------------------------------------"
 
-echo "Rodando Prisma Studio..."
-npx prisma studio &
-
-echo "-------------------------------------"
-
 echo "Iniciando servidor..."
 pnpm dev
