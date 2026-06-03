@@ -7,41 +7,275 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Usuário ───────────────────────────────────────────
 model User {
-  id           Int           @id @default(autoincrement())
-  name         String        @db.VarChar(100)
-  email        String        @unique @db.VarChar(100)
-  avatarUrl    String?       @db.VarChar(255)
-  deleteUrl    String?       @db.VarChar(255)
-  password     String        @db.VarChar(255)
-  createdAt    DateTime      @default(now())
-  transactions Transaction[]
+  id                Int                 @id @default(autoincrement())
+  name              String              @db.VarChar(100)
+  email             String              @unique @db.VarChar(100)
+  password          String              @db.VarChar(255)
+  role              Role                @default(USER)
+  isActive          Boolean             @default(true)
+  avatarUrl         String?             @db.VarChar(255)
+  deleteUrl         String?             @db.VarChar(255)
+  createdAt         DateTime            @default(now())
+  accounts          Account[]
+  cards             Card[]
+  transactions      Transaction[]
+  persons           Person[]
+  reserves          Reserve[]
+  scheduledTransfers ScheduledTransfer[]
+  purchases         Purchase[]
 }
 
-model Category {
-  id           Int             @id @default(autoincrement())
-  name         String          @db.VarChar(50)
-  description  String?
-  type         TransactionType
-  createdAt    DateTime        @default(now())
-  transactions Transaction[]
+enum Role {
+  USER
+  ADMIN
 }
 
-model Transaction {
-  id              Int             @id @default(autoincrement())
-  userId          Int?
-  categoryId      Int?
-  description     String          @db.VarChar(255)
-  amount          Decimal         @db.Decimal(10, 2)
-  transactionDate DateTime        @default(now())
-  user            User?           @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  category        Category?       @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+// ─── Conta bancária ────────────────────────────────────
+model Account {
+  id                Int                 @id @default(autoincrement())
+  userId            Int
+  name              String              @db.VarChar(100)
+  type              AccountType
+  balance           Decimal             @default(0) @db.Decimal(10, 2)
+  isFloat           Boolean             @default(false)
+  createdAt         DateTime            @default(now())
 
-  @@index([categoryId])
+  user              User                @relation(fields: [userId], references: [id])
+  transactions      Transaction[]
+  floatMonths       FloatMonth[]
+  transfersOut      ScheduledTransfer[] @relation("TransferFrom")
+  transfersIn       ScheduledTransfer[] @relation("TransferTo")
+
   @@index([userId])
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CASH
+  OTHER
+}
+
+// ─── Cartão de crédito ─────────────────────────────────
+model Card {
+  id                Int                 @id @default(autoincrement())
+  userId            Int
+  name              String              @db.VarChar(100)
+  lastDigits        String?             @db.VarChar(4)
+  limit             Decimal             @db.Decimal(10, 2)
+  closingDay        Int
+  dueDay            Int
+  createdAt         DateTime            @default(now())
+
+  user              User                @relation(fields: [userId], references: [id])
+  transactions      Transaction[]
+  floatMonths       FloatMonth[]
+  purchases         Purchase[]
+
+  @@index([userId])
+}
+
+// ─── Float por mês de fatura ───────────────────────────
+model FloatMonth {
+  id                Int                 @id @default(autoincrement())
+  accountId         Int
+  cardId            Int
+  month             Int
+  year              Int
+  amount            Decimal             @default(0) @db.Decimal(10, 2)
+  isPaid            Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+
+  account           Account             @relation(fields: [accountId], references: [id])
+  card              Card                @relation(fields: [cardId], references: [id])
+
+  @@unique([accountId, cardId, month, year])
+  @@index([accountId])
+  @@index([cardId])
+}
+
+// ─── Categoria ─────────────────────────────────────────
+model Category {
+  id                Int                 @id @default(autoincrement())
+  name              String              @db.VarChar(50)
+  description       String?
+  icon              String?             @db.VarChar(50)
+  type              TransactionType
+  createdAt         DateTime            @default(now())
+
+  transactions      Transaction[]
+  purchases         Purchase[]
+}
+
+// ─── Transação ─────────────────────────────────────────
+model Transaction {
+  id                Int                 @id @default(autoincrement())
+  userId            Int
+  categoryId        Int
+  accountId         Int?
+  cardId            Int?
+  description       String              @db.VarChar(255)
+  amount            Decimal             @db.Decimal(10, 2)
+  type              TransactionType
+  recurrence        RecurrenceType      @default(NONE)
+  scheduledTransferId Int?
+  scheduledTransfer   ScheduledTransfer? @relation(fields: [scheduledTransferId], references: [id])
+  dayOfMonth        Int?
+  isPaid            Boolean             @default(true)
+  isShared          Boolean             @default(false)
+  transactionDate   DateTime            @default(now())
+  createdAt         DateTime            @default(now())
+
+  user              User                @relation(fields: [userId], references: [id])
+  category          Category            @relation(fields: [categoryId], references: [id])
+  account           Account?            @relation(fields: [accountId], references: [id])
+  card              Card?               @relation(fields: [cardId], references: [id])
+  splits            TransactionSplit[]
+  installment       Installment?
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([cardId])
+  @@index([accountId])
+  @@index([scheduledTransferId])
 }
 
 enum TransactionType {
   INCOME
   EXPENSE
+}
+
+enum RecurrenceType {
+  NONE
+  FIXED
+  VARIABLE
+}
+
+// ─── Divisão de transação com pessoa ──────────────────
+model TransactionSplit {
+  id                Int                 @id @default(autoincrement())
+  transactionId     Int
+  personId          Int
+  amount            Decimal             @db.Decimal(10, 2)
+  isPaid            Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+
+  transaction       Transaction         @relation(fields: [transactionId], references: [id])
+  person            Person              @relation(fields: [personId], references: [id])
+
+  @@index([transactionId])
+  @@index([personId])
+}
+
+// ─── Pessoa ────────────────────────────────────────────
+model Person {
+  id                Int                 @id @default(autoincrement())
+  userId            Int
+  name              String              @db.VarChar(100)
+  nickname          String?             @db.VarChar(50)
+  createdAt         DateTime            @default(now())
+
+  user              User                @relation(fields: [userId], references: [id])
+  splits            TransactionSplit[]
+
+  @@index([userId])
+}
+
+// ─── Compra parcelada (pai) ────────────────────────────
+model Purchase {
+  id                Int                 @id @default(autoincrement())
+  userId            Int
+  cardId            Int
+  categoryId        Int
+  description       String              @db.VarChar(255)
+  totalAmount       Decimal             @db.Decimal(10, 2)
+  totalInstallments Int
+  createdAt         DateTime            @default(now())
+
+  user              User                @relation(fields: [userId], references: [id])
+  card              Card                @relation(fields: [cardId], references: [id])
+  category          Category            @relation(fields: [categoryId], references: [id])
+  installments      Installment[]
+
+  @@index([userId])
+  @@index([cardId])
+}
+
+// ─── Parcela ───────────────────────────────────────────
+model Installment {
+  id                Int                 @id @default(autoincrement())
+  purchaseId        Int
+  transactionId     Int                 @unique
+  number            Int
+  total             Int
+  amount            Decimal             @db.Decimal(10, 2)
+  isPaid            Boolean             @default(false)
+  isAnticipated     Boolean             @default(false)
+  dueDate           DateTime
+
+  purchase          Purchase            @relation(fields: [purchaseId], references: [id])
+  transaction       Transaction         @relation(fields: [transactionId], references: [id])
+
+  @@index([purchaseId])
+}
+
+// ─── Reservas e investimentos ──────────────────────────
+model Reserve {
+  id                Int                 @id @default(autoincrement())
+  userId            Int
+  name              String              @db.VarChar(100)
+  type              ReserveType
+  amount            Decimal             @default(0) @db.Decimal(10, 2)
+  goal              Decimal?            @db.Decimal(10, 2)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  user              User                @relation(fields: [userId], references: [id])
+  entries           ReserveEntry[]
+
+  @@index([userId])
+}
+
+enum ReserveType {
+  EMERGENCY
+  INVESTMENT
+  GOAL
+}
+
+// ─── Movimentações da reserva ──────────────────────────
+model ReserveEntry {
+  id                Int                 @id @default(autoincrement())
+  reserveId         Int
+  amount            Decimal             @db.Decimal(10, 2)
+  type              TransactionType
+  description       String?             @db.VarChar(255)
+  date              DateTime            @default(now())
+
+  reserve           Reserve             @relation(fields: [reserveId], references: [id])
+
+  @@index([reserveId])
+}
+
+// ─── Transferências agendadas entre contas ─────────────
+model ScheduledTransfer {
+  id                Int                 @id @default(autoincrement())
+  userId            Int
+  fromAccountId     Int
+  toAccountId       Int
+  amount            Decimal             @db.Decimal(10, 2)
+  description       String              @db.VarChar(255)
+  dayOfMonth        Int
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+
+  user              User                @relation(fields: [userId], references: [id])
+  fromAccount       Account             @relation("TransferFrom", fields: [fromAccountId], references: [id])
+  toAccount         Account             @relation("TransferTo", fields: [toAccountId], references: [id])
+  executions Transaction[]
+
+  @@index([userId])
+  @@index([fromAccountId])
+  @@index([toAccountId])
 }
